@@ -1,0 +1,58 @@
+diff --git a/node_modules/duckdb-async/dist/duckdb-async.js b/node_modules/duckdb-async/dist/duckdb-async.js
+index 4ec133d..2df2e65 100644
+--- a/node_modules/duckdb-async/dist/duckdb-async.js
++++ b/node_modules/duckdb-async/dist/duckdb-async.js
+@@ -54,6 +54,7 @@ function methodPromisify(methodFn) {
+     return util.promisify((target, ...args) => methodFn.bind(target)(...args));
+ }
+ const connAllAsync = methodPromisify(duckdb.Connection.prototype.all);
++const connCloseAsync = methodPromisify(duckdb.Connection.prototype.close);
+ const connArrowIPCAll = methodPromisify(duckdb.Connection.prototype.arrowIPCAll);
+ const connExecAsync = methodPromisify(duckdb.Connection.prototype.exec);
+ const connPrepareAsync = methodPromisify(duckdb.Connection.prototype.prepare);
+@@ -87,6 +88,14 @@ class Connection {
+         }
+         return connAllAsync(this.conn, sql, ...args);
+     }
++    async close() {
++        if (!this.conn) {
++          throw new Error("Connection.close: uninitialized connection");
++        }
++        await connCloseAsync(this.conn);
++        this.conn = null;
++        return;
++    }
+     async arrowIPCAll(sql, ...args) {
+         if (!this.conn) {
+             throw new Error("Connection.arrowIPCAll: uninitialized connection");
+diff --git a/node_modules/duckdb-async/src/duckdb-async.ts b/node_modules/duckdb-async/src/duckdb-async.ts
+index 45aec96..8e6d947 100644
+--- a/node_modules/duckdb-async/src/duckdb-async.ts
++++ b/node_modules/duckdb-async/src/duckdb-async.ts
+@@ -73,6 +73,10 @@ const connUnregisterBufferAsync = methodPromisify<duckdb.Connection, void>(
+   duckdb.Connection.prototype.unregister_buffer
+ );
+ 
++const connCloseAsync = methodPromisify<duckdb.Connection, void>(
++  duckdb.Connection.prototype.close
++);
++
+ export class Connection {
+   private conn: duckdb.Connection | null = null;
+ 
+@@ -100,6 +104,15 @@ export class Connection {
+     });
+   }
+ 
++  async close(): Promise<void> {
++    if (!this.conn) {
++      throw new Error("Connection.close: uninitialized connection");
++    }
++    await connCloseAsync(this.conn);
++    this.conn = null;
++    return;
++  }
++
+   async all(sql: string, ...args: any[]): Promise<duckdb.TableData> {
+     if (!this.conn) {
+       throw new Error("Connection.all: uninitialized connection");
