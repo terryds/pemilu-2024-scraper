@@ -7,15 +7,15 @@ try {
     console.log("init db")
     console.log(con);
 
-    // await fetchAndSaveAllProvinsi(con);
+    await fetchAndSaveAllProvinsi(con);
 
-    // await fetchAndSaveAllKota(con);
+    await fetchAndSaveAllKota(con);
 
-    // await fetchAndSaveAllKecamatan(con);
+    await fetchAndSaveAllKecamatan(con);
 
-    // await fetchAndSaveAllKelurahan(con);
+    await fetchAndSaveAllKelurahan(con);
 
-    // await fetchAndSaveAllTPS(con);
+    await fetchAndSaveAllTPS(con);
 
     await fetchAndSaveAllSuara(con);
 

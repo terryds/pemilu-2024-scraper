@@ -195,10 +195,7 @@ export async function fetchAndSaveAllKelurahan(db) {
 }
 
 export async function fetchAndSaveAllTPS(db) {
-    try {
-
-        const batchsize = 50;
-        
+    try {        
         const selectQuery = `SELECT kode FROM kelurahan_data`;
 
         const rows = await db.all(selectQuery);
@@ -275,7 +272,7 @@ export async function fetchAndSaveAllSuara(db) {
 
         while (requestPromises.length > 0) {
             console.log("in loop", requestPromises.length);
-            let batch = requestPromises.splice(0, 100);
+            let batch = requestPromises.splice(0, 300);
             let batch_results = await Promise.all(batch.map(f => f()));
             let batch_results_data = batch_results.map(response => response.data);
             results.push(...batch_results_data);
@@ -321,70 +318,70 @@ export async function fetchAndSaveAllSuara(db) {
 
         const stmt = await db.prepare(insertQuery);
 
-        for (const result of results) {
+        for (let index = 0; index < results.length; index++) {
+            const result = results[index];
+            console.log(kode_as_id[index]);
             console.log(result);
-            result.forEach(async (row, index) => {
-                console.log(index, row);
-                let origin_url = `https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${row.kode.substring(0, 2)}/${kode_as_id[index].substring(0, 4)}/${kode_as_id[index].substring(0, 6)}/${kode_as_id[index].substring(0, 10)}/${kode_as_id[index]}`;
+            let origin_url = `https://pemilu2024.kpu.go.id/pilpres/hitung-suara/${kode_as_id[index].substring(0, 2)}/${kode_as_id[index].substring(0, 4)}/${kode_as_id[index].substring(0, 6)}/${kode_as_id[index].substring(0, 10)}/${kode_as_id[index]}`;
 
-                let jumlah_suara_pasangan01_anies_imin = (row.chart && row.chart["100025"]) ? returnNullOrInteger(row.chart["100025"]) : null;
-                let jumlah_suara_pasangan02_prabowo_gibran = (row.chart && row.chart["100026"]) ? returnNullOrInteger(row.chart["100026"]) : null;
-                let jumlah_suara_pasangan03_ganjar_mahfud = (row.chart && row.chart["100027"]) ? returnNullOrInteger(row.chart["100027"]) : null;
-                let image_urls  = (row.images && Array.isArray(row.images)) ? row.images.join(', ') : null;
-                let suara_sah = (row.administrasi && row.administrasi.suara_sah) ? returnNullOrInteger(row.administrasi.suara_sah) : null;
-                let suara_tidak_sah  = (row.administrasi && row.administrasi.suara_tidak_sah) ? returnNullOrInteger(row.administrasi.suara_tidak_sah) : null;
-                let suara_total = (row.administrasi && row.administrasi.suara_total) ? returnNullOrInteger(row.administrasi.suara_total) : null;
-                let pemilih_dpt_total  = (row.administrasi && row.administrasi.pemilih_dpt_j) ? returnNullOrInteger(row.administrasi.pemilih_dpt_j) : null;
-                let pemilih_dpt_lelaki  = (row.administrasi && row.administrasi.pemilih_dpt_l) ? returnNullOrInteger(row.administrasi.pemilih_dpt_l) : null;
-                let pemilih_dpt_perempuan = (row.administrasi && row.administrasi.pemilih_dpt_p) ? returnNullOrInteger(row.administrasi.pemilih_dpt_p) : null;
-                let pengguna_dpt_total = (row.administrasi && row.administrasi.pengguna_dpt_j) ? returnNullOrInteger(row.administrasi.pengguna_dpt_j) : null;
-                let pengguna_dpt_lelaki  = (row.administrasi && row.administrasi.pengguna_dpt_l) ? returnNullOrInteger(row.administrasi.pengguna_dpt_l) : null;
-                let pengguna_dpt_perempuan  = (row.administrasi && row.administrasi.pengguna_dpt_p) ? returnNullOrInteger(row.administrasi.pengguna_dpt_p) : null;
-                let pengguna_dptb_total  = (row.administrasi && row.administrasi.pengguna_dptb_j) ? returnNullOrInteger(row.administrasi.pengguna_dptb_j) : null;
-                let pengguna_dptb_lelaki   = (row.administrasi && row.administrasi.pengguna_dptb_l) ? returnNullOrInteger(row.administrasi.pengguna_dptb_l) : null;
-                let pengguna_dptb_perempuan  = (row.administrasi && row.administrasi.pengguna_dptb_p) ? returnNullOrInteger(row.administrasi.pengguna_dptb_p) : null;
-                let pengguna_total = (row.administrasi && row.administrasi.pengguna_total_j) ? returnNullOrInteger(row.administrasi.pengguna_total_j) : null;
-                let pengguna_total_lelaki  = (row.administrasi && row.administrasi.pengguna_total_l) ? returnNullOrInteger(row.administrasi.pengguna_total_l) : null;
-                let pengguna_total_perempuan  = (row.administrasi && row.administrasi.pengguna_total_p) ? returnNullOrInteger(row.administrasi.pengguna_total_p) : null;
-                let pengguna_non_dpt_total = (row.administrasi && row.administrasi.pengguna_non_dpt_j) ? returnNullOrInteger(row.administrasi.pengguna_non_dpt_j) : null;
-                let pengguna_non_dpt_lelaki = (row.administrasi && row.administrasi.pengguna_non_dpt_l) ? returnNullOrInteger(row.administrasi.pengguna_non_dpt_l) : null;
-                let pengguna_non_dpt_perempuan = (row.administrasi && row.administrasi.pengguna_non_dpt_p) ? returnNullOrInteger(row.administrasi.pengguna_non_dpt_p) : null;
-                let psu = row.psu ?? null;
-                let status_suara = row.status_suara ?? null;
-                let status_adm = row.status_adm ?? null;
-                let ts = row.ts ?? null;
+            let jumlah_suara_pasangan01_anies_imin = (result.chart && result.chart["100025"]) ? returnNullOrInteger(result.chart["100025"]) : null;
+            let jumlah_suara_pasangan02_prabowo_gibran = (result.chart && result.chart["100026"]) ? returnNullOrInteger(result.chart["100026"]) : null;
+            let jumlah_suara_pasangan03_ganjar_mahfud = (result.chart && result.chart["100027"]) ? returnNullOrInteger(result.chart["100027"]) : null;
+            let image_urls  = (result.images && Array.isArray(result.images)) ? result.images.join(', ') : null;
+            let suara_sah = (result.administrasi && result.administrasi.suara_sah) ? returnNullOrInteger(result.administrasi.suara_sah) : null;
+            let suara_tidak_sah  = (result.administrasi && result.administrasi.suara_tidak_sah) ? returnNullOrInteger(result.administrasi.suara_tidak_sah) : null;
+            let suara_total = (result.administrasi && result.administrasi.suara_total) ? returnNullOrInteger(result.administrasi.suara_total) : null;
+            let pemilih_dpt_total  = (result.administrasi && result.administrasi.pemilih_dpt_j) ? returnNullOrInteger(result.administrasi.pemilih_dpt_j) : null;
+            let pemilih_dpt_lelaki  = (result.administrasi && result.administrasi.pemilih_dpt_l) ? returnNullOrInteger(result.administrasi.pemilih_dpt_l) : null;
+            let pemilih_dpt_perempuan = (result.administrasi && result.administrasi.pemilih_dpt_p) ? returnNullOrInteger(result.administrasi.pemilih_dpt_p) : null;
+            let pengguna_dpt_total = (result.administrasi && result.administrasi.pengguna_dpt_j) ? returnNullOrInteger(result.administrasi.pengguna_dpt_j) : null;
+            let pengguna_dpt_lelaki  = (result.administrasi && result.administrasi.pengguna_dpt_l) ? returnNullOrInteger(result.administrasi.pengguna_dpt_l) : null;
+            let pengguna_dpt_perempuan  = (result.administrasi && result.administrasi.pengguna_dpt_p) ? returnNullOrInteger(result.administrasi.pengguna_dpt_p) : null;
+            let pengguna_dptb_total  = (result.administrasi && result.administrasi.pengguna_dptb_j) ? returnNullOrInteger(result.administrasi.pengguna_dptb_j) : null;
+            let pengguna_dptb_lelaki   = (result.administrasi && result.administrasi.pengguna_dptb_l) ? returnNullOrInteger(result.administrasi.pengguna_dptb_l) : null;
+            let pengguna_dptb_perempuan  = (result.administrasi && result.administrasi.pengguna_dptb_p) ? returnNullOrInteger(result.administrasi.pengguna_dptb_p) : null;
+            let pengguna_total = (result.administrasi && result.administrasi.pengguna_total_j) ? returnNullOrInteger(result.administrasi.pengguna_total_j) : null;
+            let pengguna_total_lelaki  = (result.administrasi && result.administrasi.pengguna_total_l) ? returnNullOrInteger(result.administrasi.pengguna_total_l) : null;
+            let pengguna_total_perempuan  = (result.administrasi && result.administrasi.pengguna_total_p) ? returnNullOrInteger(result.administrasi.pengguna_total_p) : null;
+            let pengguna_non_dpt_total = (result.administrasi && result.administrasi.pengguna_non_dpt_j) ? returnNullOrInteger(result.administrasi.pengguna_non_dpt_j) : null;
+            let pengguna_non_dpt_lelaki = (result.administrasi && result.administrasi.pengguna_non_dpt_l) ? returnNullOrInteger(result.administrasi.pengguna_non_dpt_l) : null;
+            let pengguna_non_dpt_perempuan = (result.administrasi && result.administrasi.pengguna_non_dpt_p) ? returnNullOrInteger(result.administrasi.pengguna_non_dpt_p) : null;
+            let psu = result.psu ?? null;
+            let status_suara = result.status_suara ?? null;
+            let status_adm = result.status_adm ?? null;
+            let ts = result.ts ?? null;
 
-                await stmt.run(
-                    kode_as_id[index],
-                    origin_url,
-                    jumlah_suara_pasangan01_anies_imin,
-                    jumlah_suara_pasangan02_prabowo_gibran,
-                    jumlah_suara_pasangan03_ganjar_mahfud,
-                    image_urls,
-                    suara_sah,
-                    suara_tidak_sah,
-                    suara_total,
-                    pemilih_dpt_total,
-                    pemilih_dpt_lelaki,
-                    pemilih_dpt_perempuan,
-                    pengguna_dpt_total,
-                    pengguna_dpt_lelaki,
-                    pengguna_dpt_perempuan,
-                    pengguna_dptb_total,
-                    pengguna_dptb_lelaki,
-                    pengguna_dptb_perempuan,
-                    pengguna_total,
-                    pengguna_total_lelaki,
-                    pengguna_total_perempuan,
-                    pengguna_non_dpt_total,
-                    pengguna_non_dpt_lelaki,
-                    pengguna_non_dpt_perempuan,
-                    psu,
-                    status_suara,
-                    status_adm,
-                    ts
-                );
-            })
+            await stmt.run(
+                kode_as_id[index],
+                origin_url,
+                jumlah_suara_pasangan01_anies_imin,
+                jumlah_suara_pasangan02_prabowo_gibran,
+                jumlah_suara_pasangan03_ganjar_mahfud,
+                image_urls,
+                suara_sah,
+                suara_tidak_sah,
+                suara_total,
+                pemilih_dpt_total,
+                pemilih_dpt_lelaki,
+                pemilih_dpt_perempuan,
+                pengguna_dpt_total,
+                pengguna_dpt_lelaki,
+                pengguna_dpt_perempuan,
+                pengguna_dptb_total,
+                pengguna_dptb_lelaki,
+                pengguna_dptb_perempuan,
+                pengguna_total,
+                pengguna_total_lelaki,
+                pengguna_total_perempuan,
+                pengguna_non_dpt_total,
+                pengguna_non_dpt_lelaki,
+                pengguna_non_dpt_perempuan,
+                psu,
+                status_suara,
+                status_adm,
+                ts
+            );
+            
         }
 
         await stmt.finalize();
