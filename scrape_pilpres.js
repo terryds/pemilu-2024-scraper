@@ -211,7 +211,7 @@ export async function fetchAndSaveAllTPS(db) {
         let results = [];
 
         while (requestPromises.length > 0) {
-            console.log("in loop", requestPromises.length);
+            // console.log("in loop", requestPromises.length);
             let batch = requestPromises.splice(0, 100);
             let batch_results = await Promise.all(batch.map(f => f()));
             let batch_results_data = batch_results.map(response => response.data);
@@ -271,7 +271,7 @@ export async function fetchAndSaveAllSuara(db) {
 
 
         while (requestPromises.length > 0) {
-            console.log("in loop", requestPromises.length);
+            // console.log("in loop", requestPromises.length);
             let batch = requestPromises.splice(0, 300);
             let batch_results = await Promise.all(batch.map(f => f()));
             let batch_results_data = batch_results.map(response => response.data);
