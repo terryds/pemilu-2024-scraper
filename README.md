@@ -26,7 +26,7 @@ I also use DBeaver for the GUI (it supports DuckDB!): https://dbeaver.io
 
 You can check the generated DuckDB file at `pemilu2024-kpu.duckdb`
 
-If you don't want to run the script yourself & want to directly download the database, you can check our Release page here:
+If you don't want to run the script yourself & want to directly download the database, you can [download the generated database through our Release page](https://github.com/terryds/pemilu-2024-scraper/releases)
 However, please note that the database might not contain the latest data.
 
 # Usage
@@ -63,3 +63,16 @@ If your machine generates error because of the lack of memory, you can try batch
 
 
 **Feel free to create an issue if you encounter other error**
+
+# LICENSE
+
+This project is released under the MIT License.
+
+While this project is open-source and free to use, I would appreciate it if users could provide credit when using or referencing my work in their projects or publications.
+A simple acknowledgment or link back to this repository would be greatly appreciated
+
+# Contact
+
+Terry Djony
+- LinkedIn: https://www.linkedin.com/in/terry-djony/
+- Twitter: https://twitter.com/Terry_Djony
