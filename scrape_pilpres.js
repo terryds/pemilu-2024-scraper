@@ -41,42 +41,54 @@ export async function fetchAndSaveAllProvinsi(db) {
 
 export async function fetchAndSaveAllKota(db) {
     try {
-        const selectQuery = `SELECT kode FROM provinsi_data`;
+        const selectQuery = `SELECT kode, nama FROM provinsi_data`;
 
         const rows = await db.all(selectQuery);
 
-        let requestPromises = [];
+        let requestPromisesDict = {};
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`))
+            if (Array.isArray(requestPromisesDict[row.nama])) {
+                requestPromisesDict[row.nama].push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`))
+            }
+            else {
+                requestPromisesDict[row.nama] = [axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`)]
+            }
         }
-        
-        const responses = await Promise.all(requestPromises);
 
         await db.run('BEGIN TRANSACTION');
 
-        const insertQuery = `INSERT INTO kota_data (
-            id,
-            nama,
-            kode,
-            tingkat
-          ) VALUES (?, ?, ?, ?)`;
+        for (const provinsi in requestPromisesDict) {
+            const responses = await Promise.all(requestPromisesDict[provinsi]);
 
-        const stmt = await db.prepare(insertQuery);
 
-        for (const response of responses) {
-            console.log(response.data);
-            response.data.forEach(async (row) => {
-                console.log(row);
-                await stmt.run(row.id, row.nama, row.kode, row.tingkat);
-            })
+            const insertQuery = `INSERT INTO kota_data (
+                id,
+                nama,
+                kode,
+                tingkat,
+                provinsi
+            ) VALUES (?, ?, ?, ?, ?)`;
+
+            const stmt = await db.prepare(insertQuery);
+
+            for (const response of responses) {
+                console.log(response.data);
+                response.data.forEach(async (row) => {
+                    console.log(row);
+                    await stmt.run(row.id, row.nama, row.kode, row.tingkat, provinsi);
+                })
+            }
+
+            await stmt.finalize();
+
         }
 
-        await stmt.finalize();
 
         await db.run('COMMIT');
-
+        
         console.log('Rows Kota inserted successfully');
+
 
     } catch (error) {
         console.error(error);
@@ -87,38 +99,50 @@ export async function fetchAndSaveAllKota(db) {
 
 export async function fetchAndSaveAllKecamatan(db) {
     try {
-        const selectQuery = `SELECT kode FROM kota_data`;
+        const selectQuery = `SELECT kode, nama, provinsi FROM kota_data`;
 
         const rows = await db.all(selectQuery);
 
-        let requestPromises = [];
+        let requestPromisesDict = {};
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`))
+            let dict_key = `${row.nama}|${row.provinsi}`
+            if (Array.isArray(requestPromisesDict[dict_key])) {
+                requestPromisesDict[dict_key].push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`))
+            }
+            else {
+                requestPromisesDict[dict_key] = [axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`)]
+            }
         }
-        
-        const responses = await Promise.all(requestPromises);
 
         await db.run('BEGIN TRANSACTION');
 
-        const insertQuery = `INSERT INTO kecamatan_data (
-            id,
-            nama,
-            kode,
-            tingkat
-          ) VALUES (?, ?, ?, ?)`;
+        for (const key in requestPromisesDict) {
 
-        const stmt = await db.prepare(insertQuery);
+            const responses = await Promise.all(requestPromisesDict[key]);
 
-        for (const response of responses) {
-            console.log(response.data);
-            response.data.forEach(async (row) => {
-                console.log(row);
-                await stmt.run(row.id, row.nama, row.kode, row.tingkat);
-            })
+
+            const insertQuery = `INSERT INTO kecamatan_data (
+                id,
+                nama,
+                kode,
+                tingkat,
+                kota,
+                provinsi
+            ) VALUES (?, ?, ?, ?, ?, ?)`;
+
+            const stmt = await db.prepare(insertQuery);
+
+            for (const response of responses) {
+                console.log(response.data);
+                response.data.forEach(async (row) => {
+                    console.log(row);
+                    await stmt.run(row.id, row.nama, row.kode, row.tingkat, key.split("|")[0], key.split("|")[1]);
+                })
+            }
+
+            await stmt.finalize();
         }
-
-        await stmt.finalize();
 
         await db.run('COMMIT');
 
@@ -133,7 +157,7 @@ export async function fetchAndSaveAllKecamatan(db) {
 
 export async function fetchAndSaveAllKelurahan(db) {
     try {
-        const selectQuery = `SELECT kode FROM kecamatan_data`;
+        const selectQuery = `SELECT kode, nama, kota, provinsi FROM kecamatan_data`;
 
         const rows = await db.all(selectQuery);
 
@@ -168,7 +192,9 @@ export async function fetchAndSaveAllKelurahan(db) {
             id,
             nama,
             kode,
-            tingkat
+            tingkat,
+            kecamatan,
+            
           ) VALUES (?, ?, ?, ?)`;
 
         const stmt = await db.prepare(insertQuery);
@@ -271,8 +297,8 @@ export async function fetchAndSaveAllSuara(db) {
 
 
         while (requestPromises.length > 0) {
-            // console.log("in loop", requestPromises.length);
-            let batch = requestPromises.splice(0, 300);
+            console.log("in loop", requestPromises.length);
+            let batch = requestPromises.splice(0, 100);
             let batch_results = await Promise.all(batch.map(f => f()));
             let batch_results_data = batch_results.map(response => response.data);
             results.push(...batch_results_data);

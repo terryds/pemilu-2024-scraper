@@ -21,6 +21,7 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
+                provinsi TEXT NOT NULL,
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS kecamatan_data (
@@ -28,6 +29,8 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
+                kota TEXT NOT NULL,
+                provinsi TEXT NOT NULL,
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS kelurahan_data (
