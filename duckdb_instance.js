@@ -21,7 +21,7 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
-                provinsi TEXT NOT NULL,
+                provinsi_id INTEGER REFERENCES provinsi_data(id),
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS kecamatan_data (
@@ -29,8 +29,7 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
-                kota TEXT NOT NULL,
-                provinsi TEXT NOT NULL,
+                kota_id INTEGER REFERENCES kota_data(id),
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS kelurahan_data (
@@ -38,6 +37,7 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
+                kecamatan_id INTEGER REFERENCES kecamatan_data(id),
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS tps_data (
@@ -45,6 +45,7 @@ export async function initDB() {
                 nama TEXT NOT NULL,
                 kode TEXT NOT NULL,
                 tingkat INTEGER NOT NULL,
+                kelurahan_id INTEGER REFERENCES kelurahan_data(id),
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS suara_data (
@@ -76,8 +77,53 @@ export async function initDB() {
                 status_suara BOOLEAN,
                 status_adm BOOLEAN,
                 ts TIMESTAMP,
-                lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                tps_id INTEGER REFERENCES tps_data(id),
+                lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             );
+            CREATE VIEW suara_detailed_view AS
+                SELECT 
+                    sd.id,
+                    sd.origin_url,
+                    sd.jumlah_suara_pasangan01_anies_imin,
+                    sd.jumlah_suara_pasangan02_prabowo_gibran,
+                    sd.jumlah_suara_pasangan03_ganjar_mahfud,
+                    sd.image_urls,
+                    sd.suara_sah,
+                    sd.suara_tidak_sah,
+                    sd.suara_total,
+                    sd.pemilih_dpt_total,
+                    sd.pemilih_dpt_lelaki,
+                    sd.pemilih_dpt_perempuan,
+                    sd.pengguna_dpt_total,
+                    sd.pengguna_dpt_lelaki,
+                    sd.pengguna_dpt_perempuan,
+                    sd.pengguna_dptb_total,
+                    sd.pengguna_dptb_lelaki,
+                    sd.pengguna_dptb_perempuan,
+                    sd.pengguna_total,
+                    sd.pengguna_total_lelaki,
+                    sd.pengguna_total_perempuan,
+                    sd.pengguna_non_dpt_total,
+                    sd.pengguna_non_dpt_lelaki,
+                    sd.pengguna_non_dpt_perempuan,
+                    sd.psu,
+                    sd.status_suara,
+                    sd.status_adm,
+                    sd.ts,
+                    sd.lastupdated,
+                    tps.nama AS nama_tps,
+                    kel.nama AS nama_kelurahan,
+                    kec.nama AS nama_kecamatan,
+                    kot.nama AS nama_kota,
+                    prov.nama AS nama_provinsi
+                FROM 
+                    suara_data sd
+                    JOIN tps_data tps ON sd.tps_id = tps.id
+                    JOIN kelurahan_data kel ON tps.kelurahan_id = kel.id
+                    JOIN kecamatan_data kec ON kel.kecamatan_id = kec.id
+                    JOIN kota_data kot ON kec.kota_id = kot.id
+                    JOIN provinsi_data prov ON kot.provinsi_id = prov.id;
+
         `);
 
         console.log('Table created or already exists.');
@@ -85,38 +131,6 @@ export async function initDB() {
     }
     catch (error) {
         console.error('Error working with the database:', error);
-    }
-}
-
-export async function insertPemiluData(db, pemiluData) {
-    const { url, province, district, sub_district, village, tps, dpt_voters, dptb_voters, dpk_voters, total_voters, candidate01_anies_imin_votes, candidate02_prabowo_gibran_votes, candidate03_ganjar_mahfud_votes, valid_votes, invalid_votes, total_valid_and_invalid_votes } = pemiluData;
-
-    const insertQuery = `INSERT INTO election_data (
-        url,
-        province, 
-        district, 
-        sub_district, 
-        village, 
-        tps, 
-        dpt_voters, 
-        dptb_voters, 
-        dpk_voters, 
-        total_voters, 
-        candidate01_anies_imin_votes, 
-        candidate02_prabowo_gibran_votes, 
-        candidate03_ganjar_mahfud_votes, 
-        valid_votes, 
-        invalid_votes, 
-        total_valid_and_invalid_votes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-
-    const insert_data = [url, province, district, sub_district, village, tps, dpt_voters, dptb_voters, dpk_voters, total_voters, candidate01_anies_imin_votes, candidate02_prabowo_gibran_votes, candidate03_ganjar_mahfud_votes, valid_votes, invalid_votes, total_valid_and_invalid_votes];
-
-    try {
-        const result = await db.run(insertQuery, insert_data);
-        console.log(`A row has been inserted with rowid: ${result.lastID}`);
-    } catch (error) {
-        console.error(error);
     }
 }
 

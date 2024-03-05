@@ -13,11 +13,11 @@ try {
 
     await fetchAndSaveAllKecamatan(con);
 
-    // await fetchAndSaveAllKelurahan(con);
+    await fetchAndSaveAllKelurahan(con);
 
-    // await fetchAndSaveAllTPS(con);
+    await fetchAndSaveAllTPS(con);
 
-    // await fetchAndSaveAllSuara(con);
+    await fetchAndSaveAllSuara(con);
 
     await closeDB(con);
 }
