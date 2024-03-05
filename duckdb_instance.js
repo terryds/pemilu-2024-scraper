@@ -80,7 +80,7 @@ export async function initDB() {
                 tps_id INTEGER REFERENCES tps_data(id),
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             );
-            CREATE VIEW suara_detailed_view AS
+            CREATE VIEW IF NOT EXISTS suara_detailed_view AS
                 SELECT 
                     sd.id,
                     sd.origin_url,
