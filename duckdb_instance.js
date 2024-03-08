@@ -81,48 +81,53 @@ export async function initDB() {
                 lastupdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             );
             CREATE VIEW IF NOT EXISTS suara_detailed_view AS
-                SELECT 
-                    sd.id,
-                    sd.origin_url,
-                    sd.jumlah_suara_pasangan01_anies_imin,
-                    sd.jumlah_suara_pasangan02_prabowo_gibran,
-                    sd.jumlah_suara_pasangan03_ganjar_mahfud,
-                    sd.image_urls,
-                    sd.suara_sah,
-                    sd.suara_tidak_sah,
-                    sd.suara_total,
-                    sd.pemilih_dpt_total,
-                    sd.pemilih_dpt_lelaki,
-                    sd.pemilih_dpt_perempuan,
-                    sd.pengguna_dpt_total,
-                    sd.pengguna_dpt_lelaki,
-                    sd.pengguna_dpt_perempuan,
-                    sd.pengguna_dptb_total,
-                    sd.pengguna_dptb_lelaki,
-                    sd.pengguna_dptb_perempuan,
-                    sd.pengguna_total,
-                    sd.pengguna_total_lelaki,
-                    sd.pengguna_total_perempuan,
-                    sd.pengguna_non_dpt_total,
-                    sd.pengguna_non_dpt_lelaki,
-                    sd.pengguna_non_dpt_perempuan,
-                    sd.psu,
-                    sd.status_suara,
-                    sd.status_adm,
-                    sd.ts,
-                    sd.lastupdated,
-                    tps.nama AS nama_tps,
-                    kel.nama AS nama_kelurahan,
-                    kec.nama AS nama_kecamatan,
-                    kot.nama AS nama_kota,
-                    prov.nama AS nama_provinsi
-                FROM 
-                    suara_data sd
-                    JOIN tps_data tps ON sd.tps_id = tps.id
-                    JOIN kelurahan_data kel ON tps.kelurahan_id = kel.id
-                    JOIN kecamatan_data kec ON kel.kecamatan_id = kec.id
-                    JOIN kota_data kot ON kec.kota_id = kot.id
-                    JOIN provinsi_data prov ON kot.provinsi_id = prov.id;
+            SELECT 
+                sd.id,
+                sd.origin_url,
+                sd.jumlah_suara_pasangan01_anies_imin,
+                sd.jumlah_suara_pasangan02_prabowo_gibran,
+                sd.jumlah_suara_pasangan03_ganjar_mahfud,
+                sd.image_urls,
+                sd.suara_sah,
+                sd.suara_tidak_sah,
+                sd.suara_total,
+                sd.pemilih_dpt_total,
+                sd.pemilih_dpt_lelaki,
+                sd.pemilih_dpt_perempuan,
+                sd.pengguna_dpt_total,
+                sd.pengguna_dpt_lelaki,
+                sd.pengguna_dpt_perempuan,
+                sd.pengguna_dptb_total,
+                sd.pengguna_dptb_lelaki,
+                sd.pengguna_dptb_perempuan,
+                sd.pengguna_total,
+                sd.pengguna_total_lelaki,
+                sd.pengguna_total_perempuan,
+                sd.pengguna_non_dpt_total,
+                sd.pengguna_non_dpt_lelaki,
+                sd.pengguna_non_dpt_perempuan,
+                sd.psu,
+                sd.status_suara,
+                sd.status_adm,
+                sd.ts,
+                sd.lastupdated,
+                tps.id AS tps_id,
+                tps.nama AS nama_tps,
+                kel.id AS kelurahan_id,
+                kel.nama AS nama_kelurahan,
+                kec.id AS kecamatan_id,
+                kec.nama AS nama_kecamatan,
+                kot.id AS kota_id,
+                kot.nama AS nama_kota,
+                prov.id AS provinsi_id,
+                prov.nama AS nama_provinsi
+            FROM 
+                suara_data sd
+                JOIN tps_data tps ON sd.tps_id = tps.id
+                JOIN kelurahan_data kel ON tps.kelurahan_id = kel.id
+                JOIN kecamatan_data kec ON kel.kecamatan_id = kec.id
+                JOIN kota_data kot ON kec.kota_id = kot.id
+                JOIN provinsi_data prov ON kot.provinsi_id = prov.id;
 
         `);
 
