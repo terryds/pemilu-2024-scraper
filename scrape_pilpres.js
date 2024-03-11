@@ -6,9 +6,15 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const axios_config = {
+	headers: {
+		"Referer": "https://pemilu2024.kpu.go.id"
+	}
+};
+
 export async function fetchAndSaveAllProvinsi(db) {
     try {
-        const { data } = await axios.get("https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json");
+        const { data } = await axios.get("https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json", axios_config);
 
         const insertQuery = `INSERT INTO provinsi_data (
             id,
@@ -53,7 +59,7 @@ export async function fetchAndSaveAllKota(db) {
         let provinsi_ids = []
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`))
+            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`, axios_config))
             provinsi_ids.push(row.id)
         }
 
@@ -104,7 +110,7 @@ export async function fetchAndSaveAllKecamatan(db) {
         let kota_ids = [];
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`))
+            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`, axios_config))
             kota_ids.push(row.id)
         }
 
@@ -153,7 +159,7 @@ export async function fetchAndSaveAllKelurahan(db) {
         let kecamatan_ids = [];
 
         for (const row of rows) {
-            let row_promise = axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode}.json`);
+            let row_promise = axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode}.json`, axios_config);
             requestPromises.push(() => row_promise);
             kecamatan_ids.push(row.id);
         }
@@ -216,7 +222,7 @@ export async function fetchAndSaveAllTPS(db) {
 
         console.log("start loop")
         for (const row of rows) {
-            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode}.json`));
+            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode}.json`, axios_config));
             kelurahan_ids.push(row.id);
         }
         console.log("end loop")
@@ -290,7 +296,7 @@ export async function fetchAndSaveAllSuara(db) {
 
         console.log("before for of loop")
         for (const row of rows) {
-            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/pemilu/hhcw/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode.substring(0, 10)}/${row.kode}.json`));
+            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/pemilu/hhcw/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode.substring(0, 10)}/${row.kode}.json`, axios_config));
             kode_as_id.push(row.kode);
             tps_ids.push(row.id);
         }
