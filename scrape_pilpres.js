@@ -1,21 +1,60 @@
-import axios from 'axios'
-
 import { returnNullOrInteger } from './helper.js';
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const axios_config = {
+// Enhanced fetch options with more browser-like headers to avoid being blocked
+const fetchOptions = {
 	headers: {
-		"Referer": "https://pemilu2024.kpu.go.id"
+		"Referer": "https://pemilu2024.kpu.go.id",
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+		"Accept": "application/json, text/plain, */*",
+		"Accept-Language": "en-US,en;q=0.9,id;q=0.8",
+		"Connection": "keep-alive",
+		"Cache-Control": "no-cache"
+	},
+	timeout: 30000 // 30 seconds timeout
+};
+
+// Helper function to fetch with retry logic
+async function fetchWithRetry(url, options = {}, maxRetries = 2, baseDelay = 30000) {
+	let retries = 0;
+	while (true) {
+		try {
+			// console.log(`Fetching ${url}`);
+			const controller = new AbortController();
+			const id = setTimeout(() => controller.abort(), options.timeout || 10000);
+			
+			const response = await fetch(url, {
+				...options,
+				signal: controller.signal
+			});
+			clearTimeout(id);
+			
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+			
+			return await response.json();
+		} catch (error) {
+			retries++;
+			if (retries >= maxRetries) {
+				console.error(`Failed to fetch ${url} after ${maxRetries} attempts`);
+				throw error;
+			}
+			
+			const delay = baseDelay * Math.pow(2, retries) + Math.random() * 1000;
+			console.warn(`Attempt ${retries} failed for ${url}. Retrying in ${Math.round(delay)}ms...`);
+			await sleep(delay);
+		}
 	}
 };
 
 export async function fetchAndSaveAllProvinsi(db) {
     try {
         console.log('Begin Provinsi')
-        const { data } = await axios.get("https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json", axios_config);
+        const data = await fetchWithRetry("https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json", fetchOptions);
 
         const insertQuery = `INSERT INTO provinsi_data (
             id,
@@ -61,7 +100,7 @@ export async function fetchAndSaveAllKota(db) {
         let provinsi_ids = []
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`, axios_config))
+            requestPromises.push(fetchWithRetry(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode}.json`, fetchOptions))
             provinsi_ids.push(row.id)
         }
 
@@ -81,8 +120,8 @@ export async function fetchAndSaveAllKota(db) {
 
         for (let index = 0; index < responses.length; index++) {
             const response = responses[index];
-            console.log(response.data);
-            response.data.forEach(async (row) => {
+            console.log(response);
+            response.forEach(async (row) => {
                 console.log(row);
                 await stmt.run(row.id, row.nama, row.kode, row.tingkat, provinsi_ids[index]);
             })
@@ -113,7 +152,7 @@ export async function fetchAndSaveAllKecamatan(db) {
         let kota_ids = [];
 
         for (const row of rows) {
-            requestPromises.push(axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`, axios_config))
+            requestPromises.push(fetch(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode}.json`, fetchOptions).then(res => res.json()))
             kota_ids.push(row.id)
         }
 
@@ -133,8 +172,8 @@ export async function fetchAndSaveAllKecamatan(db) {
 
         for (let index = 0; index < responses.length; index++) {
             const response = responses[index];
-            console.log(response.data);
-            response.data.forEach(async (row) => {
+            console.log(response);
+            response.forEach(async (row) => {
                 console.log(row);
                 await stmt.run(row.id, row.nama, row.kode, row.tingkat, kota_ids[index]);
             })
@@ -163,7 +202,7 @@ export async function fetchAndSaveAllKelurahan(db) {
         let kecamatan_ids = [];
 
         for (const row of rows) {
-            let row_promise = axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode}.json`, axios_config);
+            let row_promise = fetchWithRetry(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode}.json`, fetchOptions);
             requestPromises.push(() => row_promise);
             kecamatan_ids.push(row.id);
         }
@@ -175,12 +214,22 @@ export async function fetchAndSaveAllKelurahan(db) {
         while (requestPromises.length > 0) {
             console.log("in loop");
             console.log(`length: ${requestPromises.length}`);
-            const batch = requestPromises.splice(0, 100);
+            const batch = requestPromises.splice(0, 50);
             console.log(`length after splice: ${requestPromises.length}`);
-            let batch_results = await Promise.all(batch.map(f => f()));
-            let batch_results_data = batch_results.map(response => response.data);
-            // console.log("batch result completed", batch_results_data);
-            results.push(...batch_results_data);
+            try {
+                let batch_results = await Promise.all(batch.map(f => f()));
+                let batch_results_data = batch_results.map(response => response);
+                // console.log("batch result completed", batch_results_data);
+                results.push(...batch_results_data);
+            } catch (error) {
+                console.error(error)
+                console.log("got some error, will sleep 1 sec and try again")
+                await sleep(1000)
+                batch_results = await Promise.all(batch.map(f => f()));
+                let batch_results_data = batch_results.map(response => response);
+                // console.log("batch result completed", batch_results_data);
+                results.push(...batch_results_data);
+            }
         }
         
         const insertQuery = `INSERT INTO kelurahan_data (
@@ -227,7 +276,8 @@ export async function fetchAndSaveAllTPS(db) {
 
         console.log("start loop")
         for (const row of rows) {
-            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode}.json`, axios_config));
+            let row_promise = fetchWithRetry(`https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode}.json`, fetchOptions);
+            requestPromises.push(() => row_promise);
             kelurahan_ids.push(row.id);
         }
         console.log("end loop")
@@ -238,7 +288,7 @@ export async function fetchAndSaveAllTPS(db) {
 
         while (requestPromises.length > 0) {
             console.log("in loop", requestPromises.length);
-            let batch = requestPromises.splice(0, 100);
+            let batch = requestPromises.splice(0, 50);
             let batch_results;
             try {
                 batch_results = await Promise.all(batch.map(f => f()));
@@ -248,7 +298,7 @@ export async function fetchAndSaveAllTPS(db) {
                 await sleep(1000)
                 batch_results = await Promise.all(batch.map(f => f()));
             }
-            let batch_results_data = batch_results.map(response => response.data);
+            let batch_results_data = batch_results.map(response => response);
             results.push(...batch_results_data);
         }
 
@@ -301,7 +351,8 @@ export async function fetchAndSaveAllSuara(db) {
 
         console.log("before for of loop")
         for (const row of rows) {
-            requestPromises.push(() => axios.get(`https://sirekap-obj-data.kpu.go.id/pemilu/hhcw/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode.substring(0, 10)}/${row.kode}.json`, axios_config));
+            let row_promise = fetchWithRetry(`https://sirekap-obj-data.kpu.go.id/pemilu/hhcw/ppwp/${row.kode.substring(0, 2)}/${row.kode.substring(0, 4)}/${row.kode.substring(0, 6)}/${row.kode.substring(0, 10)}/${row.kode}.json`, fetchOptions);
+            requestPromises.push(() => row_promise);
             kode_as_id.push(row.kode);
             tps_ids.push(row.id);
         }
@@ -310,7 +361,7 @@ export async function fetchAndSaveAllSuara(db) {
 
         while (requestPromises.length > 0) {
             console.log("in loop", requestPromises.length);
-            let batch = requestPromises.splice(0, 200);
+            let batch = requestPromises.splice(0, 50);
             let batch_results;
             try {
                 batch_results = await Promise.all(batch.map(f => f()));
@@ -320,7 +371,7 @@ export async function fetchAndSaveAllSuara(db) {
                 await sleep(1000)
                 batch_results = await Promise.all(batch.map(f => f()));
             }
-            let batch_results_data = batch_results.map(response => response.data);
+            let batch_results_data = batch_results.map(response => response);
             results.push(...batch_results_data);
         }
         
