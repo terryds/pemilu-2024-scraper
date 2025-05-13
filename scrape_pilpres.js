@@ -14,6 +14,7 @@ const axios_config = {
 
 export async function fetchAndSaveAllProvinsi(db) {
     try {
+        console.log('Begin Provinsi')
         const { data } = await axios.get("https://sirekap-obj-data.kpu.go.id/wilayah/pemilu/ppwp/0.json", axios_config);
 
         const insertQuery = `INSERT INTO provinsi_data (
@@ -21,7 +22,7 @@ export async function fetchAndSaveAllProvinsi(db) {
             nama,
             kode,
             tingkat
-          ) VALUES (?, ?, ?, ?)`;
+          ) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
     
         const insertData = data;
 
@@ -51,6 +52,7 @@ export async function fetchAndSaveAllProvinsi(db) {
 
 export async function fetchAndSaveAllKota(db) {
     try {
+        console.log('Begin Kota')
         const selectQuery = `SELECT kode, id FROM provinsi_data`;
 
         const rows = await db.all(selectQuery);
@@ -73,7 +75,7 @@ export async function fetchAndSaveAllKota(db) {
             kode,
             tingkat,
             provinsi_id
-        ) VALUES (?, ?, ?, ?, ?)`;
+        ) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
 
         const stmt = await db.prepare(insertQuery);
 
@@ -102,6 +104,7 @@ export async function fetchAndSaveAllKota(db) {
 
 export async function fetchAndSaveAllKecamatan(db) {
     try {
+        console.log('Begin Kecamatan')
         const selectQuery = `SELECT kode, id FROM kota_data`;
 
         const rows = await db.all(selectQuery);
@@ -124,7 +127,7 @@ export async function fetchAndSaveAllKecamatan(db) {
             kode,
             tingkat,
             kota_id
-          ) VALUES (?, ?, ?, ?, ?)`;
+          ) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
 
         const stmt = await db.prepare(insertQuery);
 
@@ -151,6 +154,7 @@ export async function fetchAndSaveAllKecamatan(db) {
 
 export async function fetchAndSaveAllKelurahan(db) {
     try {
+        console.log('Begin Kelurahan')
         const selectQuery = `SELECT kode, id FROM kecamatan_data`;
 
         const rows = await db.all(selectQuery);
@@ -185,7 +189,7 @@ export async function fetchAndSaveAllKelurahan(db) {
             kode,
             tingkat,
             kecamatan_id
-          ) VALUES (?, ?, ?, ?, ?)`;
+          ) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
 
         const stmt = await db.prepare(insertQuery);
 
@@ -213,6 +217,7 @@ export async function fetchAndSaveAllKelurahan(db) {
 
 export async function fetchAndSaveAllTPS(db) {
     try {        
+        console.log('Begin TPS');
         const selectQuery = `SELECT kode, id FROM kelurahan_data`;
 
         const rows = await db.all(selectQuery);
@@ -253,7 +258,7 @@ export async function fetchAndSaveAllTPS(db) {
             kode,
             tingkat,
             kelurahan_id
-          ) VALUES (?, ?, ?, ?, ?)`;
+          ) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
 
         const stmt = await db.prepare(insertQuery);
 
@@ -356,7 +361,7 @@ export async function fetchAndSaveAllSuara(db) {
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?,
-            ?, ?, ?, ?)`;
+            ?, ?, ?, ?) ON CONFLICT DO NOTHING;`;
 
         const stmt = await db.prepare(insertQuery);
 
