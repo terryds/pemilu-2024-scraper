@@ -1,5 +1,7 @@
 # Pemilu 2024 Scraper to DuckDB
 
+**⚠️ IMPORTANT: This project is no longer maintained since the site has implemented rate-limiting and it's not working anymore. The latest data has already been uploaded to the Releases folder. Please check out the data visualization project for Pemilu Pilpres 2024 here: https://github.com/terryds/pemilu-2024-pilpres-indonesia-visualizer**
+
 Fast, simple script to scrape from Pemilu KPU 2024 (Indonesian General Election)
 
 - Data retrieved from Sirekap API that's being called from pemilu2024.kpu.go.id (take a look at the browser's network request)

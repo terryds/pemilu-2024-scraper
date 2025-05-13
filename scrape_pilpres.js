@@ -14,7 +14,7 @@ const fetchOptions = {
 		"Connection": "keep-alive",
 		"Cache-Control": "no-cache"
 	},
-	timeout: 30000 // 30 seconds timeout
+	timeout: 10000 // 10 seconds timeout
 };
 
 // Helper function to fetch with retry logic
@@ -22,7 +22,7 @@ async function fetchWithRetry(url, options = {}, maxRetries = 2, baseDelay = 300
 	let retries = 0;
 	while (true) {
 		try {
-			// console.log(`Fetching ${url}`);
+			console.log(`Fetching ${url}`);
 			const controller = new AbortController();
 			const id = setTimeout(() => controller.abort(), options.timeout || 10000);
 			
